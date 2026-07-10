@@ -1,0 +1,14 @@
+{
+  "name": "KhetSaathi - Farm Companion",
+  "short_name": "KhetSaathi",
+  "description": "Plant library, AI disease detector, calculators and farmer community — all in one app.",
+  "start_url": "./khetsaathi.html",
+  "display": "standalone",
+  "background_color": "#f4f3ea",
+  "theme_color": "#2c4d28",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

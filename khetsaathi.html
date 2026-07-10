@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#2c4d28">
+<link rel="manifest" href="manifest.json">
+<title>KhetSaathi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --soil-dark:#22301c; --leaf-green:#3f6b3a; --leaf-green-deep:#2c4d28;
+    --paper:#f4f3ea; --paper-2:#eae7d8; --mustard:#c98a1f; --sky:#e7eee1;
+    --card-border:#d8d4bf; --text-main:#22301c; --text-soft:#5a6650;
+    --danger:#9c3b2c; --ok:#3f6b3a; --radius:16px; --shadow:0 2px 10px rgba(34,48,28,0.08);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--paper-2);font-family:'Inter',sans-serif;color:var(--text-main);-webkit-font-smoothing:antialiased;display:flex;justify-content:center;}
+  .app{width:100%;max-width:430px;min-height:100vh;background:var(--paper);position:relative;display:flex;flex-direction:column;box-shadow:0 0 40px rgba(0,0,0,0.12);overflow:hidden;}
+
+  /* ---- Language Splash ---- */
+  .lang-splash{
+    position:absolute;inset:0;z-index:50;
+    background:linear-gradient(160deg,var(--leaf-green-deep),var(--leaf-green) 75%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:30px;text-align:center;color:#fdfbf3;
+  }
+  .lang-splash.hidden{display:none;}
+  .lang-mark{width:56px;height:56px;background:var(--mustard);border-radius:16px;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;font-size:28px;color:var(--soil-dark);margin-bottom:16px;}
+  .lang-brand{font-family:'Fraunces',serif;font-size:26px;font-weight:600;margin-bottom:6px;}
+  .lang-prompt{font-family:'IBM Plex Mono',monospace;font-size:13px;color:#d9e4d1;margin-bottom:26px;}
+  .lang-options{display:flex;flex-direction:column;gap:12px;width:100%;max-width:260px;}
+  .lang-btn{
+    background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.35);
+    color:#fdfbf3;padding:14px;border-radius:14px;font-size:16px;font-weight:600;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .lang-btn:active{background:var(--mustard);color:var(--soil-dark);border-color:var(--mustard);}
+  .lang-btn .sub{font-size:11.5px;font-weight:400;opacity:0.8;margin-left:4px;}
+
+  /* ---- Header ---- */
+  .app-header{background:linear-gradient(160deg,var(--leaf-green-deep),var(--leaf-green) 70%);color:#fdfbf3;padding:22px 20px 30px;border-radius:0 0 22px 22px;position:relative;overflow:hidden;}
+  .app-header::after{content:"";position:absolute;right:-30px;top:-30px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,0.06);}
+  .brand-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .brand-left{display:flex;align-items:center;gap:10px;}
+  .brand-mark{width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--mustard);border-radius:9px;font-family:'Fraunces',serif;font-weight:700;font-size:18px;color:var(--soil-dark);}
+  .brand-name{font-family:'Fraunces',serif;font-size:22px;font-weight:600;letter-spacing:0.2px;}
+  .brand-tag{font-size:12.5px;color:#d9e4d1;margin-top:2px;font-family:'IBM Plex Mono',monospace;}
+  .lang-toggle{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fdfbf3;font-size:11.5px;font-weight:600;padding:6px 10px;border-radius:9px;cursor:pointer;}
+  .who-row{display:flex;gap:8px;margin-top:18px;}
+  .who-chip{flex:1;text-align:center;padding:9px 4px;border-radius:11px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.18);font-size:12.5px;color:#eef4ea;cursor:pointer;transition:all .15s ease;}
+  .who-chip.active{background:var(--mustard);color:var(--soil-dark);font-weight:600;border-color:var(--mustard);}
+
+  /* ---- Screens ---- */
+  .screen{flex:1;padding:18px 16px 100px;display:none;}
+  .screen.active{display:block;}
+  .section-title{font-family:'Fraunces',serif;font-size:19px;font-weight:600;margin:4px 0 12px;color:var(--soil-dark);}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--leaf-green);margin-bottom:4px;}
+
+  .search-box{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--card-border);border-radius:12px;padding:10px 14px;margin-bottom:14px;}
+  .search-box input{border:none;outline:none;flex:1;font-family:'Inter';font-size:14.5px;background:transparent;color:var(--text-main);}
+  .chip-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;margin-bottom:6px;scrollbar-width:none;}
+  .chip-row::-webkit-scrollbar{display:none;}
+  .chip{flex:0 0 auto;padding:7px 14px;border-radius:20px;background:#fff;border:1px solid var(--card-border);font-size:13px;color:var(--text-soft);cursor:pointer;white-space:nowrap;}
+  .chip.active{background:var(--leaf-green);color:#fff;border-color:var(--leaf-green);}
+
+  .plant-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .packet{background:#fff;border:1px solid var(--card-border);border-radius:var(--radius);padding:14px 12px 12px;cursor:pointer;position:relative;box-shadow:var(--shadow);transition:transform .12s ease;}
+  .packet:active{transform:scale(0.97);}
+  .packet-icon{width:38px;height:38px;margin-bottom:8px;}
+  .packet-name-hi{font-family:'Fraunces',serif;font-weight:600;font-size:15px;color:var(--soil-dark);}
+  .packet-name-en{font-size:11.5px;color:var(--text-soft);font-style:italic;margin-top:1px;}
+  .packet-tag{position:absolute;top:10px;right:10px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;padding:2px 6px;border-radius:5px;background:var(--sky);color:var(--leaf-green-deep);}
+
+  .overlay{position:absolute;inset:0;background:rgba(34,48,28,0.45);z-index:20;display:none;}
+  .overlay.active{display:block;}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:var(--paper);border-radius:22px 22px 0 0;max-height:82%;overflow-y:auto;padding:20px 18px 30px;transform:translateY(100%);transition:transform .25s ease;}
+  .sheet.active{transform:translateY(0);}
+  .sheet-handle{width:40px;height:4px;background:var(--card-border);border-radius:4px;margin:0 auto 14px;}
+  .sheet-header{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+  .sheet-icon{width:46px;height:46px;flex:0 0 auto;}
+  .sheet-title{font-family:'Fraunces',serif;font-size:20px;font-weight:700;color:var(--soil-dark);}
+  .sheet-sub{font-size:12.5px;color:var(--text-soft);font-style:italic;}
+  .info-row{display:flex;gap:10px;margin-bottom:14px;}
+  .info-pill{flex:1;background:#fff;border:1px solid var(--card-border);border-radius:12px;padding:10px;text-align:center;}
+  .info-pill .label{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--text-soft);text-transform:uppercase;}
+  .info-pill .val{font-size:13.5px;font-weight:600;margin-top:3px;color:var(--soil-dark);}
+  .disease-item{background:#fff;border:1px solid var(--card-border);border-left:4px solid var(--danger);border-radius:10px;padding:12px;margin-bottom:10px;}
+  .disease-item .d-name{font-weight:600;font-size:14px;margin-bottom:3px;}
+  .disease-item .d-symptom{font-size:12.5px;color:var(--text-soft);margin-bottom:5px;}
+  .disease-item .d-fix{font-size:12.5px;color:var(--leaf-green-deep);}
+  .close-sheet{position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:50%;background:var(--paper-2);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--soil-dark);cursor:pointer;}
+
+  .detect-card{background:#fff;border:1.5px dashed var(--card-border);border-radius:var(--radius);padding:26px 18px;text-align:center;margin-bottom:16px;}
+  .detect-card img{max-width:100%;border-radius:12px;margin-bottom:12px;}
+  .upload-btn,.primary-btn{background:var(--leaf-green);color:#fff;border:none;padding:12px 20px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter';}
+  .upload-btn:active,.primary-btn:active{background:var(--leaf-green-deep);}
+  .hint-text{font-size:12px;color:var(--text-soft);margin-top:10px;}
+  .result-card{background:#fff;border:1px solid var(--card-border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);}
+  .result-card .rc-title{font-family:'Fraunces',serif;font-size:17px;font-weight:700;color:var(--soil-dark);margin-bottom:2px;}
+  .result-card .rc-sub{font-size:12px;color:var(--text-soft);margin-bottom:12px;font-style:italic;}
+  .rc-block{margin-bottom:12px;}
+  .rc-block .rc-label{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--leaf-green);margin-bottom:4px;}
+  .rc-block .rc-text{font-size:13.5px;line-height:1.5;color:var(--text-main);}
+  .confidence-bar{height:6px;background:var(--paper-2);border-radius:4px;overflow:hidden;margin-top:6px;}
+  .confidence-fill{height:100%;background:var(--mustard);}
+  .loading-wrap{text-align:center;padding:30px 10px;}
+  .spinner{width:34px;height:34px;border:3px solid var(--paper-2);border-top-color:var(--leaf-green);border-radius:50%;margin:0 auto 14px;animation:spin 0.8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loading-text{font-size:13px;color:var(--text-soft);font-family:'IBM Plex Mono',monospace;}
+  .error-box{background:#fdf1ee;border:1px solid #e3b9ac;color:var(--danger);border-radius:10px;padding:12px;font-size:13px;}
+
+  .home-hero{background:#fff;border:1px solid var(--card-border);border-radius:var(--radius);padding:18px;margin-bottom:16px;box-shadow:var(--shadow);}
+  .home-hero .hh-title{font-family:'Fraunces',serif;font-size:18px;font-weight:600;margin-bottom:6px;color:var(--soil-dark);}
+  .home-hero .hh-text{font-size:13.5px;color:var(--text-soft);line-height:1.55;}
+  .quick-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px;}
+  .qa-card{flex:1;min-width:45%;background:linear-gradient(160deg,var(--leaf-green),var(--leaf-green-deep));color:#fff;border-radius:14px;padding:14px 12px;cursor:pointer;}
+  .qa-card.alt{background:linear-gradient(160deg,#d59a35,var(--mustard));}
+  .qa-card.alt2{background:linear-gradient(160deg,#5b7a9e,#2f4863);}
+  .qa-card.alt3{background:linear-gradient(160deg,#a15a7a,#6e3450);}
+  .qa-card .qa-label{font-size:13px;font-weight:600;}
+  .qa-card .qa-sub{font-size:11px;opacity:0.85;margin-top:3px;}
+  .stat-row{display:flex;gap:10px;margin-top:16px;}
+  .stat-pill{flex:1;background:var(--sky);border-radius:12px;padding:12px;text-align:center;}
+  .stat-pill .num{font-family:'Fraunces',serif;font-size:20px;font-weight:700;color:var(--leaf-green-deep);}
+  .stat-pill .lbl{font-size:10.5px;color:var(--text-soft);margin-top:2px;}
+
+  /* ---- Learn ---- */
+  .segment-row{display:flex;background:var(--paper-2);border-radius:12px;padding:4px;margin-bottom:16px;}
+  .segment-btn{flex:1;text-align:center;padding:9px 4px;font-size:13px;font-weight:600;color:var(--text-soft);cursor:pointer;border-radius:9px;}
+  .segment-btn.active{background:#fff;color:var(--leaf-green-deep);box-shadow:var(--shadow);}
+  .article-card{background:#fff;border:1px solid var(--card-border);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;}
+  .article-head{display:flex;justify-content:space-between;align-items:center;}
+  .article-title{font-family:'Fraunces',serif;font-weight:600;font-size:14.5px;color:var(--soil-dark);}
+  .article-arrow{color:var(--leaf-green);font-size:14px;transition:transform .2s;}
+  .article-body{font-size:13px;color:var(--text-soft);line-height:1.55;margin-top:10px;display:none;}
+  .article-card.open .article-body{display:block;}
+  .article-card.open .article-arrow{transform:rotate(90deg);}
+
+  .calc-box{background:#fff;border:1px solid var(--card-border);border-radius:14px;padding:16px;margin-bottom:14px;}
+  .calc-title{font-family:'Fraunces',serif;font-weight:600;font-size:15px;color:var(--soil-dark);margin-bottom:10px;}
+  .calc-row{display:flex;gap:8px;margin-bottom:10px;}
+  .calc-input,.calc-select{flex:1;padding:10px;border-radius:10px;border:1px solid var(--card-border);font-size:13.5px;font-family:'Inter';background:var(--paper);}
+  .calc-result{background:var(--sky);border-radius:10px;padding:12px;font-size:13px;color:var(--leaf-green-deep);margin-top:6px;}
+  .calc-result b{font-family:'IBM Plex Mono',monospace;}
+  .disclaimer{font-size:11px;color:var(--text-soft);font-style:italic;margin-top:8px;}
+
+  /* ---- Community ---- */
+  .qa-post{background:#fff;border:1px solid var(--card-border);border-radius:14px;padding:14px;margin-bottom:12px;}
+  .qa-post .q-tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;background:var(--sky);color:var(--leaf-green-deep);padding:2px 7px;border-radius:6px;margin-bottom:6px;}
+  .qa-post .q-text{font-weight:600;font-size:14px;color:var(--soil-dark);margin-bottom:6px;}
+  .qa-post .a-text{font-size:13px;color:var(--text-soft);line-height:1.5;border-left:3px solid var(--leaf-green);padding-left:10px;}
+  .qa-post .q-meta{font-size:11px;color:var(--text-soft);margin-top:8px;}
+  .ask-box{background:#fff;border:1px solid var(--card-border);border-radius:14px;padding:14px;margin-bottom:16px;}
+  .ask-box textarea{width:100%;border:1px solid var(--card-border);border-radius:10px;padding:10px;font-family:'Inter';font-size:13.5px;resize:none;min-height:70px;background:var(--paper);margin-bottom:10px;}
+
+  .bottom-nav{position:sticky;bottom:0;left:0;right:0;background:#fdfcf7;border-top:1px solid var(--card-border);display:flex;padding:8px 4px calc(env(safe-area-inset-bottom,0px) + 8px);z-index:10;}
+  .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;cursor:pointer;color:var(--text-soft);}
+  .nav-item.active{color:var(--leaf-green-deep);}
+  .nav-item svg{width:20px;height:20px;}
+  .nav-item span{font-size:9.5px;font-weight:600;}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <div class="lang-splash" id="langSplash">
+    <div class="lang-mark">क्ष</div>
+    <div class="lang-brand">KhetSaathi</div>
+    <div class="lang-prompt">भाषा चुनें / Choose your language</div>
+    <div class="lang-options">
+      <div class="lang-btn" onclick="setLang('hi')">हिंदी <span class="sub">(Hindi)</span></div>
+      <div class="lang-btn" onclick="setLang('en')">English <span class="sub">(अंग्रेज़ी)</span></div>
+    </div>
+  </div>
+
+  <div class="app-header">
+    <div class="brand-row">
+      <div class="brand-left">
+        <div class="brand-mark">क्ष</div>
+        <div>
+          <div class="brand-name">KhetSaathi</div>
+          <div class="brand-tag" data-t="brandTag"></div>
+        </div>
+      </div>
+      <div class="lang-toggle" onclick="toggleLang()" id="langToggleBtn"></div>
+    </div>
+    <div class="who-row">
+      <div class="who-chip active" data-who="farmer"><span data-t="whoFarmer"></span></div>
+      <div class="who-chip" data-who="student"><span data-t="whoStudent"></span></div>
+      <div class="who-chip" data-who="gardener"><span data-t="whoGardener"></span></div>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div class="screen active" id="screen-home">
+    <div class="home-hero">
+      <div class="hh-title" data-t="homeHeading"></div>
+      <div class="hh-text" data-t="homeText"></div>
+      <div class="quick-actions">
+        <div class="qa-card" onclick="goTo('library')">
+          <div class="qa-label" data-t="qaLibrary"></div>
+          <div class="qa-sub" data-t="qaLibrarySub"></div>
+        </div>
+        <div class="qa-card alt" onclick="goTo('detect')">
+          <div class="qa-label" data-t="qaDetect"></div>
+          <div class="qa-sub" data-t="qaDetectSub"></div>
+        </div>
+        <div class="qa-card alt2" onclick="goTo('learn')">
+          <div class="qa-label" data-t="qaLearn"></div>
+          <div class="qa-sub" data-t="qaLearnSub"></div>
+        </div>
+        <div class="qa-card alt3" onclick="goTo('community')">
+          <div class="qa-label" data-t="qaCommunity"></div>
+          <div class="qa-sub" data-t="qaCommunitySub"></div>
+        </div>
+      </div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-pill"><div class="num">14</div><div class="lbl" data-t="statPlants"></div></div>
+      <div class="stat-pill"><div class="num">4</div><div class="lbl" data-t="statCats"></div></div>
+      <div class="stat-pill"><div class="num">AI</div><div class="lbl" data-t="statAI"></div></div>
+    </div>
+  </div>
+
+  <!-- LIBRARY -->
+  <div class="screen" id="screen-library">
+    <div class="eyebrow">Plant &amp; Crop Library</div>
+    <div class="section-title" data-t="libraryTitle"></div>
+    <div class="search-box">
+      <span>🔍</span>
+      <input id="searchInput" data-t-ph="searchPlaceholder">
+    </div>
+    <div class="chip-row" id="chipRow"></div>
+    <div class="plant-grid" id="plantGrid"></div>
+  </div>
+
+  <!-- DETECT -->
+  <div class="screen" id="screen-detect">
+    <div class="eyebrow">AI Disease Detector</div>
+    <div class="section-title" data-t="detectTitle"></div>
+    <div class="detect-card" id="detectCard">
+      <div style="font-size:34px;margin-bottom:10px;">🌿📷</div>
+      <div style="font-size:13.5px;color:var(--text-soft);margin-bottom:14px;" data-t="detectIntro"></div>
+      <input type="file" accept="image/*" id="fileInput" style="display:none;">
+      <button class="upload-btn" onclick="document.getElementById('fileInput').click()" data-t="detectBtn"></button>
+      <div class="hint-text" data-t="detectHint"></div>
+    </div>
+    <div id="detectResultArea"></div>
+  </div>
+
+  <!-- LEARN -->
+  <div class="screen" id="screen-learn">
+    <div class="eyebrow">Knowledge &amp; Tools</div>
+    <div class="section-title" data-t="learnTitle"></div>
+    <div class="segment-row">
+      <div class="segment-btn active" data-seg="articles" onclick="setLearnSeg('articles')" data-t="tabArticles"></div>
+      <div class="segment-btn" data-seg="calc" onclick="setLearnSeg('calc')" data-t="tabCalculators"></div>
+    </div>
+    <div id="learnArticles"></div>
+    <div id="learnCalc" style="display:none;"></div>
+  </div>
+
+  <!-- COMMUNITY -->
+  <div class="screen" id="screen-community">
+    <div class="eyebrow">Farmer Community</div>
+    <div class="section-title" data-t="communityTitle"></div>
+    <div class="ask-box">
+      <textarea id="askInput" data-t-ph="askPlaceholder"></textarea>
+      <button class="primary-btn" style="width:100%;" onclick="postQuestion()" data-t="askBtn"></button>
+    </div>
+    <div id="qaList"></div>
+  </div>
+
+  <div class="overlay" id="overlay" onclick="closeSheet()"></div>
+  <div class="sheet" id="sheet">
+    <div class="close-sheet" onclick="closeSheet()">✕</div>
+    <div class="sheet-handle"></div>
+    <div id="sheetContent"></div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item active" data-screen="home" onclick="goTo('home')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11l9-7 9 7"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg>
+      <span data-t="navHome"></span>
+    </div>
+    <div class="nav-item" data-screen="library" onclick="goTo('library')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span data-t="navLibrary"></span>
+    </div>
+    <div class="nav-item" data-screen="detect" onclick="goTo('detect')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      <span data-t="navDetect"></span>
+    </div>
+    <div class="nav-item" data-screen="learn" onclick="goTo('learn')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h7M9 11h7"/></svg>
+      <span data-t="navLearn"></span>
+    </div>
+    <div class="nav-item" data-screen="community" onclick="goTo('community')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="9" r="3.2"/><circle cx="17" cy="10.5" r="2.6"/><path d="M2.5 20c0-3.3 2.5-6 5.5-6s5.5 2.7 5.5 6"/><path d="M13.5 15.3c2.4.3 4 2.4 4 4.7"/></svg>
+      <span data-t="navCommunity"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------------- Language ---------------- */
+let lang = null;
+
+const T = {
+  hi:{
+    brandTag:'खेत की जानकारी, एक जगह',
+    whoFarmer:'किसान', whoStudent:'स्टूडेंट', whoGardener:'गार्डनर',
+    homeHeading:'आज कहाँ से शुरू करें?',
+    homeText:'पौधों की जानकारी देखें, बीमार पौधे की फोटो जांचें, टिप्स पढ़ें या दूसरे किसानों से सवाल पूछें — सब कुछ एक ही जगह।',
+    qaLibrary:'लाइब्रेरी खोलें', qaLibrarySub:'Browse plants',
+    qaDetect:'फोटो जांचें', qaDetectSub:'Disease check',
+    qaLearn:'सीखें', qaLearnSub:'Tips & tools',
+    qaCommunity:'समुदाय', qaCommunitySub:'Ask & answer',
+    statPlants:'पौधे लिस्ट में', statCats:'श्रेणियां', statAI:'फोटो जांच',
+    libraryTitle:'पौधों की लाइब्रेरी', searchPlaceholder:'पौधे का नाम खोजें... (e.g. Tomato)', noPlantsFound:'कोई पौधा नहीं मिला',
+    detectTitle:'पौधे की फोटो जांचें',
+    detectIntro:'पत्ती या पौधे की साफ फोटो अपलोड करें। AI आपको बताएगा कि पौधे में कौन सी बीमारी या कमी हो सकती है।',
+    detectBtn:'फोटो चुनें', detectHint:'Tip: पत्ती को अच्छी रोशनी में, नज़दीक से फोटो लें',
+    detectLoading:'पौधे की जांच हो रही है...', detectErrorPrefix:'माफ़ करें, जांच में समस्या हुई। कृपया फिर से कोशिश करें।',
+    sheetSeason:'Season', sheetWater:'Water', sheetSoil:'Soil', sheetIssues:'आम बीमारियां / Common Issues',
+    symptomLabel:'लक्षण', fixLabel:'उपाय',
+    learnTitle:'जानकारी और टूल्स', tabArticles:'टिप्स', tabCalculators:'कैलकुलेटर',
+    communityTitle:'किसान समुदाय', askPlaceholder:'अपना सवाल यहाँ लिखें...', askBtn:'सवाल पोस्ट करें',
+    postedTag:'नया सवाल', pendingAnswer:'अभी तक कोई जवाब नहीं — जल्द ही मिलेगा',
+    navHome:'होम', navLibrary:'लाइब्रेरी', navDetect:'जांचें', navLearn:'सीखें', navCommunity:'समुदाय',
+    calcFertTitle:'खाद कैलकुलेटर', calcAreaLabel:'क्षेत्रफल (एकड़ में)', calcCropLabel:'फसल चुनें',
+    calcFertBtn:'गणना करें', calcFertResult:(u,d,m)=>`अनुमानित मात्रा — यूरिया: <b>${u} kg</b>, DAP: <b>${d} kg</b>, MOP: <b>${m} kg</b>`,
+    calcWaterTitle:'सिंचाई पानी कैलकुलेटर', calcWaterBtn:'गणना करें',
+    calcWaterResult:(l)=>`अनुमानित पानी की ज़रूरत: <b>${l} लीटर/दिन</b>`,
+    calcYieldTitle:'उपज अनुमानक', calcYieldBtn:'गणना करें',
+    calcYieldResult:(y)=>`अनुमानित कुल उपज: <b>${y} क्विंटल</b>`,
+    calcDisclaimer:'ये अनुमान सामान्य औसत आंकड़ों पर आधारित हैं। सटीक सलाह के लिए स्थानीय कृषि विशेषज्ञ से सलाह लें।',
+    selectPlaceholder:'-- चुनें --',
+  },
+  en:{
+    brandTag:'Everything about your farm, one place',
+    whoFarmer:'Farmer', whoStudent:'Student', whoGardener:'Gardener',
+    homeHeading:'Where do you want to start today?',
+    homeText:'Browse plant info, check a sick plant photo, read quick tips, or ask fellow farmers a question — all in one app.',
+    qaLibrary:'Open Library', qaLibrarySub:'Browse plants',
+    qaDetect:'Check a Photo', qaDetectSub:'Disease check',
+    qaLearn:'Learn', qaLearnSub:'Tips & tools',
+    qaCommunity:'Community', qaCommunitySub:'Ask & answer',
+    statPlants:'plants listed', statCats:'categories', statAI:'photo check',
+    libraryTitle:'Plant & Crop Library', searchPlaceholder:'Search a plant... (e.g. Tomato)', noPlantsFound:'No plants found',
+    detectTitle:'Check Your Plant Photo',
+    detectIntro:'Upload a clear photo of a leaf or plant. AI will tell you the likely disease or deficiency.',
+    detectBtn:'Choose Photo', detectHint:'Tip: take the photo close-up, in good light',
+    detectLoading:'Checking your plant...', detectErrorPrefix:'Sorry, something went wrong. Please try again.',
+    sheetSeason:'Season', sheetWater:'Water', sheetSoil:'Soil', sheetIssues:'Common Issues',
+    symptomLabel:'Symptoms', fixLabel:'Treatment',
+    learnTitle:'Knowledge & Tools', tabArticles:'Tips', tabCalculators:'Calculators',
+    communityTitle:'Farmer Community', askPlaceholder:'Type your question here...', askBtn:'Post Question',
+    postedTag:'New question', pendingAnswer:'No answers yet — check back soon',
+    navHome:'Home', navLibrary:'Library', navDetect:'Detect', navLearn:'Learn', navCommunity:'Community',
+    calcFertTitle:'Fertilizer Calculator', calcAreaLabel:'Area (in acres)', calcCropLabel:'Select crop',
+    calcFertBtn:'Calculate', calcFertResult:(u,d,m)=>`Estimated amount — Urea: <b>${u} kg</b>, DAP: <b>${d} kg</b>, MOP: <b>${m} kg</b>`,
+    calcWaterTitle:'Irrigation Water Calculator', calcWaterBtn:'Calculate',
+    calcWaterResult:(l)=>`Estimated water need: <b>${l} litres/day</b>`,
+    calcYieldTitle:'Yield Estimator', calcYieldBtn:'Calculate',
+    calcYieldResult:(y)=>`Estimated total yield: <b>${y} quintals</b>`,
+    calcDisclaimer:'These are rough averages for guidance only. Consult your local agriculture expert for precise advice.',
+    selectPlaceholder:'-- Select --',
+  }
+};
+
+function t(key){ return T[lang][key]; }
+
+function applyTranslations(){
+  document.querySelectorAll('[data-t]').forEach(el=>{
+    el.textContent = t(el.dataset.t);
+  });
+  document.querySelectorAll('[data-t-ph]').forEach(el=>{
+    el.placeholder = t(el.dataset.tPh);
+  });
+  document.getElementById('langToggleBtn').textContent = lang==='hi' ? 'EN' : 'हि';
+  document.documentElement.lang = lang;
+}
+
+function setLang(chosen){
+  lang = chosen;
+  document.getElementById('langSplash').classList.add('hidden');
+  applyTranslations();
+  renderChips();
+  renderGrid();
+  renderArticles();
+  renderCalculators();
+  renderQaList();
+}
+
+function toggleLang(){
+  setLang(lang==='hi' ? 'en' : 'hi');
+}
+
+document.querySelectorAll('.who-chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    document.querySelectorAll('.who-chip').forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active');
+  });
+});
+
+/* ---------------- Nav ---------------- */
+function goTo(screen){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+screen).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.screen===screen));
+}
+
+/* ---------------- Data ---------------- */
+const CATS = [
+  {id:'all', hi:'सभी', en:'All'},
+  {id:'grain', hi:'अनाज', en:'Grains'},
+  {id:'veg', hi:'सब्ज़ी', en:'Vegetables'},
+  {id:'fruit', hi:'फल', en:'Fruits'},
+  {id:'home', hi:'गार्डन', en:'Home Plants'},
+];
+
+const ICONS = {
+  grain:`<svg viewBox="0 0 40 40" fill="none" stroke="#c98a1f" stroke-width="2"><path d="M20 6v22"/><path d="M20 10c-4-4-10-3-10 2 4 2 8 0 10-2z"/><path d="M20 14c4-4 10-3 10 2-4 2-8 0-10-2z"/><path d="M20 18c-4-4-10-3-10 2 4 2 8 0 10-2z"/><path d="M20 28l-3 6h6z"/></svg>`,
+  veg:`<svg viewBox="0 0 40 40" fill="none" stroke="#c0392b" stroke-width="2"><circle cx="20" cy="23" r="10"/><path d="M20 13c1-4 4-6 7-6-1 3-3 5-7 6z"/></svg>`,
+  fruit:`<svg viewBox="0 0 40 40" fill="none" stroke="#e08e2b" stroke-width="2"><circle cx="18" cy="24" r="9"/><circle cx="27" cy="21" r="6"/><path d="M18 15c0-4 2-7 5-8"/></svg>`,
+  home:`<svg viewBox="0 0 40 40" fill="none" stroke="#3f6b3a" stroke-width="2"><path d="M20 32V14"/><path d="M20 18c-6-2-10 2-10 8 6 1 9-3 10-8z"/><path d="M20 14c6-2 10 2 10 8-6 1-9-3-10-8z"/><path d="M12 32h16"/></svg>`,
+};
+
+const PLANTS = [
+  {id:'wheat',hi:'गेहूं',en:'Wheat',cat:'grain',season:{hi:'रबी (Nov–Apr)',en:'Rabi (Nov–Apr)'},water:{hi:'मध्यम',en:'Medium'},soil:{hi:'दोमट मिट्टी',en:'Loamy soil'},
+    diseases:[
+      {hi:{name:'रतुआ रोग (Rust)',symptom:'पत्तियों पर पीले-भूरे धब्बे',fix:'Propiconazole स्प्रे करें, रोग-रोधी किस्म बोएं'},en:{name:'Rust',symptom:'Yellow-brown spots on leaves',fix:'Spray Propiconazole; grow resistant variety'}},
+      {hi:{name:'कंडुआ रोग (Smut)',symptom:'बालियां काले चूर्ण से भर जाती हैं',fix:'बीज को फफूंदनाशी से उपचारित करें'},en:{name:'Smut',symptom:'Grain heads fill with black powder',fix:'Treat seeds with fungicide before sowing'}}]},
+  {id:'rice',hi:'धान',en:'Rice',cat:'grain',season:{hi:'खरीफ (Jun–Nov)',en:'Kharif (Jun–Nov)'},water:{hi:'अधिक',en:'High'},soil:{hi:'चिकनी मिट्टी',en:'Clayey soil'},
+    diseases:[
+      {hi:{name:'ब्लास्ट रोग',symptom:'पत्तियों पर आंख जैसे धब्बे',fix:'Tricyclazole का छिड़काव करें'},en:{name:'Blast disease',symptom:'Eye-shaped spots on leaves',fix:'Spray Tricyclazole'}},
+      {hi:{name:'भूरा धब्बा रोग',symptom:'भूरे गोल धब्बे पत्तों पर',fix:'संतुलित उर्वरक व फफूंदनाशी उपयोग करें'},en:{name:'Brown spot',symptom:'Round brown spots on leaves',fix:'Use balanced fertilizer and fungicide'}}]},
+  {id:'maize',hi:'मक्का',en:'Maize',cat:'grain',season:{hi:'खरीफ/रबी दोनों',en:'Kharif & Rabi'},water:{hi:'मध्यम',en:'Medium'},soil:{hi:'दोमट, जल निकासी वाली',en:'Well-drained loam'},
+    diseases:[{hi:{name:'पत्ती झुलसा रोग',symptom:'लंबे धूसर-हरे धब्बे',fix:'रोग-रोधी बीज व फफूंदनाशी स्प्रे'},en:{name:'Leaf blight',symptom:'Long grey-green streaks',fix:'Use resistant seed and fungicide spray'}}]},
+  {id:'cotton',hi:'कपास',en:'Cotton',cat:'grain',season:{hi:'खरीफ (Apr–Oct)',en:'Kharif (Apr–Oct)'},water:{hi:'मध्यम',en:'Medium'},soil:{hi:'काली मिट्टी',en:'Black soil'},
+    diseases:[{hi:{name:'गुलाबी सुंडी',symptom:'फूल व टिंडे में छेद',fix:'फेरोमोन ट्रैप लगाएं, समय पर स्प्रे करें'},en:{name:'Pink bollworm',symptom:'Holes in flowers and bolls',fix:'Use pheromone traps, spray on time'}}]},
+  {id:'sugarcane',hi:'गन्ना',en:'Sugarcane',cat:'grain',season:{hi:'साल भर (क्षेत्र अनुसार)',en:'Year-round (region based)'},water:{hi:'अधिक',en:'High'},soil:{hi:'गहरी उपजाऊ मिट्टी',en:'Deep fertile soil'},
+    diseases:[{hi:{name:'लाल सड़न रोग',symptom:'तने के अंदर लाल धारियां',fix:'रोग-मुक्त बीज उपयोग करें, फसल चक्र अपनाएं'},en:{name:'Red rot',symptom:'Red streaks inside the stem',fix:'Use disease-free seed, rotate crops'}}]},
+  {id:'tomato',hi:'टमाटर',en:'Tomato',cat:'veg',season:{hi:'साल भर',en:'Year-round'},water:{hi:'मध्यम-नियमित',en:'Medium, regular'},soil:{hi:'दोमट, अच्छी जल निकासी',en:'Loamy, well-drained'},
+    diseases:[
+      {hi:{name:'पछेती झुलसा',symptom:'पत्तों-फलों पर काले-भूरे धब्बे',fix:'Mancozeb स्प्रे, अधिक नमी से बचाएं'},en:{name:'Late blight',symptom:'Dark brown spots on leaves and fruit',fix:'Spray Mancozeb, avoid excess moisture'}},
+      {hi:{name:'पत्ती मोड़क वायरस',symptom:'पत्तियां मुड़ी व छोटी हो जाती हैं',fix:'सफेद मक्खी नियंत्रण करें'},en:{name:'Leaf curl virus',symptom:'Leaves curl and become small',fix:'Control whitefly population'}}]},
+  {id:'potato',hi:'आलू',en:'Potato',cat:'veg',season:{hi:'रबी (Oct–Feb)',en:'Rabi (Oct–Feb)'},water:{hi:'मध्यम',en:'Medium'},soil:{hi:'बलुई दोमट',en:'Sandy loam'},
+    diseases:[{hi:{name:'अगेती झुलसा',symptom:'पत्तों पर गोल भूरे छल्लेदार धब्बे',fix:'फफूंदनाशी छिड़काव, फसल चक्र अपनाएं'},en:{name:'Early blight',symptom:'Round brown ring-spots on leaves',fix:'Fungicide spray, rotate crops'}}]},
+  {id:'onion',hi:'प्याज',en:'Onion',cat:'veg',season:{hi:'रबी',en:'Rabi'},water:{hi:'मध्यम',en:'Medium'},soil:{hi:'दोमट, जल निकासी वाली',en:'Well-drained loam'},
+    diseases:[{hi:{name:'बैंगनी धब्बा रोग',symptom:'पत्तों पर बैंगनी-भूरे धब्बे',fix:'Mancozeb स्प्रे करें'},en:{name:'Purple blotch',symptom:'Purple-brown spots on leaves',fix:'Spray Mancozeb'}}]},
+  {id:'brinjal',hi:'बैंगन',en:'Brinjal',cat:'veg',season:{hi:'साल भर',en:'Year-round'},water:{hi:'नियमित',en:'Regular'},soil:{hi:'उपजाऊ दोमट',en:'Fertile loam'},
+    diseases:[{hi:{name:'तना व फल छेदक कीट',symptom:'तने व फल में छेद, मुरझाना',fix:'प्रभावित भाग काटकर नष्ट करें, कीटनाशी स्प्रे'},en:{name:'Fruit and shoot borer',symptom:'Holes in stem/fruit, wilting',fix:'Cut and destroy affected parts, spray pesticide'}}]},
+  {id:'mango',hi:'आम',en:'Mango',cat:'fruit',season:{hi:'फूल: Jan–Feb',en:'Flowering: Jan–Feb'},water:{hi:'कम-मध्यम',en:'Low-medium'},soil:{hi:'गहरी दोमट',en:'Deep loam'},
+    diseases:[{hi:{name:'चूर्णिल आसिता',symptom:'फूलों पर सफेद चूर्ण जैसी परत',fix:'Sulphur स्प्रे फूल आने पर करें'},en:{name:'Powdery mildew',symptom:'White powdery coating on flowers',fix:'Spray Sulphur during flowering'}}]},
+  {id:'banana',hi:'केला',en:'Banana',cat:'fruit',season:{hi:'साल भर',en:'Year-round'},water:{hi:'अधिक-नियमित',en:'High, regular'},soil:{hi:'उपजाऊ, नमी युक्त',en:'Fertile, moist'},
+    diseases:[{hi:{name:'पनामा विल्ट',symptom:'पत्तियां पीली होकर लटक जाती हैं',fix:'रोग-रोधी किस्म चुनें, जल निकासी सुधारें'},en:{name:'Panama wilt',symptom:'Leaves yellow and hang down',fix:'Choose resistant variety, improve drainage'}}]},
+  {id:'moneyplant',hi:'मनी प्लांट',en:'Money Plant',cat:'home',season:{hi:'साल भर (इनडोर)',en:'Year-round (indoor)'},water:{hi:'हल्की-नियमित',en:'Light, regular'},soil:{hi:'सामान्य पॉटिंग मिक्स',en:'General potting mix'},
+    diseases:[{hi:{name:'जड़ सड़न',symptom:'पत्तियां पीली, तना मुलायम',fix:'पानी कम करें, गमले में जल निकासी सुधारें'},en:{name:'Root rot',symptom:'Yellow leaves, soft stem',fix:'Reduce watering, improve pot drainage'}}]},
+  {id:'tulsi',hi:'तुलसी',en:'Holy Basil',cat:'home',season:{hi:'साल भर',en:'Year-round'},water:{hi:'नियमित हल्का',en:'Light, regular'},soil:{hi:'दोमट, धूप वाली जगह',en:'Loamy, sunny spot'},
+    diseases:[{hi:{name:'पत्ती धब्बा रोग',symptom:'पत्तों पर काले-भूरे धब्बे',fix:'अधिक पानी से बचें, हवादार जगह रखें'},en:{name:'Leaf spot',symptom:'Black-brown spots on leaves',fix:'Avoid overwatering, keep in airy spot'}}]},
+  {id:'aloevera',hi:'एलोवेरा',en:'Aloe Vera',cat:'home',season:{hi:'साल भर',en:'Year-round'},water:{hi:'कम (सूखा सहनशील)',en:'Low (drought tolerant)'},soil:{hi:'रेतीली, जल निकासी वाली',en:'Sandy, well-drained'},
+    diseases:[{hi:{name:'जड़ सड़न',symptom:'पत्तियां मुलायम, आधार से गलना',fix:'पानी बहुत कम दें, गमले में छेद रखें'},en:{name:'Root rot',symptom:'Soft leaves, rotting at the base',fix:'Water very sparingly, ensure pot has holes'}}]},
+];
+
+/* ---------------- Library render ---------------- */
+let activeCat = 'all';
+let searchTerm = '';
+
+function renderChips(){
+  const row = document.getElementById('chipRow');
+  row.innerHTML = CATS.map(c=>`<div class="chip ${c.id===activeCat?'active':''}" data-cat="${c.id}">${c[lang]}</div>`).join('');
+  row.querySelectorAll('.chip').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      activeCat = chip.dataset.cat;
+      renderChips();
+      renderGrid();
+    });
+  });
+}
+
+function renderGrid(){
+  const grid = document.getElementById('plantGrid');
+  const filtered = PLANTS.filter(p=>{
+    const matchCat = activeCat==='all' || p.cat===activeCat;
+    const matchSearch = (p.hi+p.en).toLowerCase().includes(searchTerm.toLowerCase());
+    return matchCat && matchSearch;
+  });
+  if(filtered.length===0){
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:30px 0;color:var(--text-soft);font-size:13.5px;">${t('noPlantsFound')}</div>`;
+    return;
+  }
+  grid.innerHTML = filtered.map(p=>`
+    <div class="packet" data-id="${p.id}">
+      <div class="packet-tag">${CATS.find(c=>c.id===p.cat)[lang]}</div>
+      <div class="packet-icon">${ICONS[p.cat]}</div>
+      <div class="packet-name-hi">${p.hi}</div>
+      <div class="packet-name-en">${p.en}</div>
+    </div>
+  `).join('');
+  grid.querySelectorAll('.packet').forEach(card=>{
+    card.addEventListener('click', ()=>openSheet(card.dataset.id));
+  });
+}
+
+document.getElementById('searchInput').addEventListener('input', (e)=>{
+  searchTerm = e.target.value;
+  renderGrid();
+});
+
+function openSheet(id){
+  const p = PLANTS.find(x=>x.id===id);
+  const content = document.getElementById('sheetContent');
+  content.innerHTML = `
+    <div class="sheet-header">
+      <div class="sheet-icon">${ICONS[p.cat]}</div>
+      <div><div class="sheet-title">${p.hi}</div><div class="sheet-sub">${p.en}</div></div>
+    </div>
+    <div class="info-row">
+      <div class="info-pill"><div class="label">${t('sheetSeason')}</div><div class="val">${p.season[lang]}</div></div>
+      <div class="info-pill"><div class="label">${t('sheetWater')}</div><div class="val">${p.water[lang]}</div></div>
+      <div class="info-pill"><div class="label">${t('sheetSoil')}</div><div class="val">${p.soil[lang]}</div></div>
+    </div>
+    <div class="eyebrow" style="margin-top:6px;">${t('sheetIssues')}</div>
+    ${p.diseases.map(d=>`
+      <div class="disease-item">
+        <div class="d-name">${d[lang].name}</div>
+        <div class="d-symptom">${t('symptomLabel')}: ${d[lang].symptom}</div>
+        <div class="d-fix">${t('fixLabel')}: ${d[lang].fix}</div>
+      </div>
+    `).join('')}
+  `;
+  document.getElementById('overlay').classList.add('active');
+  document.getElementById('sheet').classList.add('active');
+}
+function closeSheet(){
+  document.getElementById('overlay').classList.remove('active');
+  document.getElementById('sheet').classList.remove('active');
+}
+
+/* ---------------- Learn: Articles ---------------- */
+const ARTICLES = [
+  {hi:{title:'फसल चक्र क्यों जरूरी है',body:'एक ही खेत में बार-बार एक जैसी फसल लगाने से मिट्टी की उर्वरता कम होती है और बीमारियां बढ़ती हैं। फसल चक्र अपनाने से मिट्टी स्वस्थ रहती है और उपज बेहतर होती है।'},en:{title:'Why crop rotation matters',body:'Growing the same crop repeatedly in one field reduces soil fertility and increases disease risk. Rotating crops keeps soil healthier and improves yield over time.'}},
+  {hi:{title:'जैविक खाद के फायदे',body:'गोबर खाद, कम्पोस्ट और वर्मी-कम्पोस्ट मिट्टी की संरचना सुधारते हैं, पानी रोकने की क्षमता बढ़ाते हैं और लंबे समय में रासायनिक खाद पर निर्भरता कम करते हैं।'},en:{title:'Benefits of organic manure',body:'Farmyard manure, compost, and vermicompost improve soil structure, boost water retention, and reduce long-term dependence on chemical fertilizer.'}},
+  {hi:{title:'पानी की बचत के तरीके',body:'ड्रिप सिंचाई और मल्चिंग अपनाकर 30-50% तक पानी बचाया जा सकता है। सुबह जल्दी या शाम को सिंचाई करने से वाष्पीकरण भी कम होता है।'},en:{title:'Ways to save irrigation water',body:'Drip irrigation and mulching can save 30-50% water. Irrigating early morning or evening also reduces evaporation loss.'}},
+  {hi:{title:'मिट्टी परीक्षण क्यों कराएं',body:'मिट्टी परीक्षण से पता चलता है कि किस पोषक तत्व की कमी है, जिससे सही मात्रा में खाद डाली जा सकती है और पैसे व फसल दोनों की बचत होती है।'},en:{title:'Why get a soil test done',body:'A soil test reveals which nutrients are lacking, so you apply the right fertilizer in the right amount — saving both money and crop health.'}},
+  {hi:{title:'कीट प्रबंधन के प्राकृतिक तरीके',body:'नीम का तेल, फेरोमोन ट्रैप, और मित्र कीट (जैसे लेडीबग) रासायनिक कीटनाशी की जरूरत घटाते हैं और पर्यावरण के लिए बेहतर हैं।'},en:{title:'Natural pest management methods',body:'Neem oil, pheromone traps, and beneficial insects like ladybugs reduce the need for chemical pesticides and are better for the environment.'}},
+  {hi:{title:'बीज चयन के टिप्स',body:'हमेशा प्रमाणित स्रोत से बीज खरीदें, अंकुरण दर जांचें, और अपने क्षेत्र की जलवायु के अनुसार रोग-रोधी किस्म चुनें।'},en:{title:'Tips for selecting good seeds',body:'Always buy from a certified source, check germination rate, and pick disease-resistant varieties suited to your local climate.'}},
+];
+
+function renderArticles(){
+  const wrap = document.getElementById('learnArticles');
+  wrap.innerHTML = ARTICLES.map((a,i)=>`
+    <div class="article-card" data-idx="${i}">
+      <div class="article-head">
+        <div class="article-title">${a[lang].title}</div>
+        <div class="article-arrow">▸</div>
+      </div>
+      <div class="article-body">${a[lang].body}</div>
+    </div>
+  `).join('');
+  wrap.querySelectorAll('.article-card').forEach(card=>{
+    card.addEventListener('click', ()=>card.classList.toggle('open'));
+  });
+}
+
+/* ---------------- Learn: Calculators ---------------- */
+const CALC_DATA = {
+  wheat:{urea:55,dap:35,mop:15,waterPerAcre:180000,yieldPerAcre:18},
+  rice:{urea:65,dap:30,mop:20,waterPerAcre:350000,yieldPerAcre:22},
+  maize:{urea:60,dap:32,mop:16,waterPerAcre:150000,yieldPerAcre:20},
+  cotton:{urea:50,dap:25,mop:20,waterPerAcre:160000,yieldPerAcre:8},
+  sugarcane:{urea:100,dap:50,mop:40,waterPerAcre:400000,yieldPerAcre:320},
+  tomato:{urea:45,dap:40,mop:25,waterPerAcre:170000,yieldPerAcre:80},
+  potato:{urea:60,dap:40,mop:30,waterPerAcre:150000,yieldPerAcre:70},
+  onion:{urea:50,dap:30,mop:25,waterPerAcre:140000,yieldPerAcre:60},
+  brinjal:{urea:45,dap:35,mop:22,waterPerAcre:160000,yieldPerAcre:65},
+  mango:{urea:30,dap:20,mop:20,waterPerAcre:120000,yieldPerAcre:40},
+  banana:{urea:70,dap:35,mop:45,waterPerAcre:250000,yieldPerAcre:150},
+};
+
+function cropOptions(){
+  return PLANTS.filter(p=>CALC_DATA[p.id]).map(p=>`<option value="${p.id}">${p[lang]}</option>`).join('');
+}
+
+function renderCalculators(){
+  const wrap = document.getElementById('learnCalc');
+  wrap.innerHTML = `
+    <div class="calc-box">
+      <div class="calc-title">${t('calcFertTitle')}</div>
+      <div class="calc-row">
+        <select class="calc-select" id="fertCrop"><option value="">${t('selectPlaceholder')}</option>${cropOptions()}</select>
+        <input class="calc-input" id="fertArea" type="number" min="0.1" step="0.1" placeholder="${t('calcAreaLabel')}">
+      </div>
+      <button class="primary-btn" style="width:100%;" onclick="calcFert()">${t('calcFertBtn')}</button>
+      <div class="calc-result" id="fertResult" style="display:none;"></div>
+    </div>
+    <div class="calc-box">
+      <div class="calc-title">${t('calcWaterTitle')}</div>
+      <div class="calc-row">
+        <select class="calc-select" id="waterCrop"><option value="">${t('selectPlaceholder')}</option>${cropOptions()}</select>
+        <input class="calc-input" id="waterArea" type="number" min="0.1" step="0.1" placeholder="${t('calcAreaLabel')}">
+      </div>
+      <button class="primary-btn" style="width:100%;" onclick="calcWater()">${t('calcWaterBtn')}</button>
+      <div class="calc-result" id="waterResult" style="display:none;"></div>
+    </div>
+    <div class="calc-box">
+      <div class="calc-title">${t('calcYieldTitle')}</div>
+      <div class="calc-row">
+        <select class="calc-select" id="yieldCrop"><option value="">${t('selectPlaceholder')}</option>${cropOptions()}</select>
+        <input class="calc-input" id="yieldArea" type="number" min="0.1" step="0.1" placeholder="${t('calcAreaLabel')}">
+      </div>
+      <button class="primary-btn" style="width:100%;" onclick="calcYield()">${t('calcYieldBtn')}</button>
+      <div class="calc-result" id="yieldResult" style="display:none;"></div>
+    </div>
+    <div class="disclaimer">${t('calcDisclaimer')}</div>
+  `;
+}
+
+function calcFert(){
+  const crop = document.getElementById('fertCrop').value;
+  const area = parseFloat(document.getElementById('fertArea').value);
+  const box = document.getElementById('fertResult');
+  if(!crop || !area || area<=0){ box.style.display='block'; box.innerHTML = lang==='hi'?'कृपया फसल और क्षेत्रफल दोनों भरें':'Please fill both crop and area'; return; }
+  const d = CALC_DATA[crop];
+  box.style.display='block';
+  box.innerHTML = t('calcFertResult')(Math.round(d.urea*area), Math.round(d.dap*area), Math.round(d.mop*area));
+}
+function calcWater(){
+  const crop = document.getElementById('waterCrop').value;
+  const area = parseFloat(document.getElementById('waterArea').value);
+  const box = document.getElementById('waterResult');
+  if(!crop || !area || area<=0){ box.style.display='block'; box.innerHTML = lang==='hi'?'कृपया फसल और क्षेत्रफल दोनों भरें':'Please fill both crop and area'; return; }
+  const d = CALC_DATA[crop];
+  box.style.display='block';
+  box.innerHTML = t('calcWaterResult')(Math.round(d.waterPerAcre*area).toLocaleString());
+}
+function calcYield(){
+  const crop = document.getElementById('yieldCrop').value;
+  const area = parseFloat(document.getElementById('yieldArea').value);
+  const box = document.getElementById('yieldResult');
+  if(!crop || !area || area<=0){ box.style.display='block'; box.innerHTML = lang==='hi'?'कृपया फसल और क्षेत्रफल दोनों भरें':'Please fill both crop and area'; return; }
+  const d = CALC_DATA[crop];
+  box.style.display='block';
+  box.innerHTML = t('calcYieldResult')(Math.round(d.yieldPerAcre*area));
+}
+
+function setLearnSeg(seg){
+  document.querySelectorAll('.segment-btn').forEach(b=>b.classList.toggle('active', b.dataset.seg===seg));
+  document.getElementById('learnArticles').style.display = seg==='articles' ? 'block' : 'none';
+  document.getElementById('learnCalc').style.display = seg==='calc' ? 'block' : 'none';
+}
+
+/* ---------------- Community ---------------- */
+let QA_POSTS = [
+  {tagHi:'सिंचाई', tagEn:'Irrigation', qHi:'ड्रिप सिंचाई लगाने में कितना खर्च आता है?', qEn:'How much does drip irrigation cost to install?', aHi:'सामान्यतः प्रति एकड़ ₹25,000–40,000 तक खर्च आता है, फसल और सिस्टम के अनुसार। कई राज्यों में सब्सिडी भी मिलती है।', aEn:'Typically ₹25,000–40,000 per acre depending on crop and system. Many states also offer subsidies.', author:'Ramesh, Punjab'},
+  {tagHi:'कीट नियंत्रण', tagEn:'Pest Control', qHi:'टमाटर में सफेद मक्खी को कैसे रोकें?', qEn:'How to control whitefly in tomato?', aHi:'पीले स्टिकी ट्रैप लगाएं, नीम के तेल का छिड़काव करें, और खेत के आसपास खरपतवार साफ रखें।', aEn:'Use yellow sticky traps, spray neem oil, and keep the field free of weeds nearby.', author:'Sunita, Maharashtra'},
+  {tagHi:'मिट्टी', tagEn:'Soil', qHi:'मिट्टी परीक्षण कहाँ करवा सकते हैं?', qEn:'Where can I get a soil test done?', aHi:'नज़दीकी कृषि विज्ञान केंद्र (KVK) या जिला मिट्टी परीक्षण प्रयोगशाला में मुफ्त या कम शुल्क में करवा सकते हैं।', aEn:'You can get it done at your nearest Krishi Vigyan Kendra (KVK) or district soil testing lab, often free or low cost.', author:'Deepak, UP'},
+];
+
+function renderQaList(){
+  const wrap = document.getElementById('qaList');
+  wrap.innerHTML = QA_POSTS.map(post=>{
+    const answerHtml = post.pending
+      ? `<div class="a-text" style="font-style:italic;">${t('pendingAnswer')}</div>`
+      : `<div class="a-text">${lang==='hi'?post.aHi:post.aEn}</div>`;
+    return `
+    <div class="qa-post">
+      <div class="q-tag">${lang==='hi'?post.tagHi:post.tagEn}</div>
+      <div class="q-text">${lang==='hi'?post.qHi:post.qEn}</div>
+      ${answerHtml}
+      <div class="q-meta">— ${post.author}</div>
+    </div>`;
+  }).join('');
+}
+
+function postQuestion(){
+  const input = document.getElementById('askInput');
+  const val = input.value.trim();
+  if(!val) return;
+  QA_POSTS.unshift({
+    tagHi: t('postedTag'), tagEn: t('postedTag'),
+    qHi: val, qEn: val,
+    pending: true,
+    author: lang==='hi' ? 'आप' : 'You'
+  });
+  input.value = '';
+  renderQaList();
+}
+
+/* ---------------- Disease Detector ---------------- */
+const fileInput = document.getElementById('fileInput');
+const detectCard = document.getElementById('detectCard');
+const resultArea = document.getElementById('detectResultArea');
+
+fileInput.addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async function(ev){
+    const base64Full = ev.target.result;
+    const base64Data = base64Full.split(',')[1];
+    const mediaType = file.type || 'image/jpeg';
+
+    detectCard.innerHTML = `<img src="${base64Full}" alt="uploaded plant photo">`;
+    resultArea.innerHTML = `<div class="result-card"><div class="loading-wrap"><div class="spinner"></div><div class="loading-text">${t('detectLoading')}</div></div></div>`;
+
+    try{
+      const langInstruction = lang==='hi'
+        ? "Respond with Hindi text in the hi-language fields and English text in the en-language fields."
+        : "Respond with English text in both fields, keeping the hi fields also in simple English since the user chose English.";
+
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 1000,
+          messages: [{
+            role: "user",
+            content: [
+              { type: "image", source: { type: "base64", media_type: mediaType, data: base64Data } },
+              { type: "text", text: `You are an agriculture expert helping Indian farmers, students and home gardeners. Look at this plant/crop/leaf photo carefully. ${langInstruction} Respond ONLY in raw JSON, no markdown fences, no preamble, with this exact structure: {"plant_name_hi":"...", "plant_name_en":"...", "condition_hi":"...", "condition_en":"...", "symptoms_hi":"...", "treatment_hi":"...", "confidence": a number between 40 and 95}. If the image is unclear or not a plant, set condition fields to indicate that and explain in symptoms fields.` }
+            ]
+          }]
+        })
+      });
+
+      const data = await response.json();
+      const textBlock = (data.content || []).find(b=>b.type==='text');
+      if(!textBlock) throw new Error('No response from AI');
+
+      let clean = textBlock.text.trim().replace(/^```json/,'').replace(/^```/,'').replace(/```$/,'').trim();
+      const result = JSON.parse(clean);
+
+      const nameLine = lang==='hi'
+        ? `${result.plant_name_hi} <span style="font-size:13px;color:var(--text-soft);font-weight:400;">(${result.plant_name_en})</span>`
+        : `${result.plant_name_en}`;
+
+      resultArea.innerHTML = `
+        <div class="result-card">
+          <div class="rc-title">${nameLine}</div>
+          <div class="rc-sub">AI Analysis</div>
+          <div class="rc-block">
+            <div class="rc-label">Condition</div>
+            <div class="rc-text" style="font-weight:600;">${lang==='hi'? result.condition_hi + ' <span style=\"font-weight:400;color:var(--text-soft);\">('+result.condition_en+')</span>' : result.condition_en}</div>
+          </div>
+          <div class="rc-block">
+            <div class="rc-label">${t('symptomLabel')}</div>
+            <div class="rc-text">${result.symptoms_hi}</div>
+          </div>
+          <div class="rc-block">
+            <div class="rc-label">${t('fixLabel')}</div>
+            <div class="rc-text">${result.treatment_hi}</div>
+          </div>
+          <div class="rc-block" style="margin-bottom:2px;">
+            <div class="rc-label">Confidence</div>
+            <div class="confidence-bar"><div class="confidence-fill" style="width:${result.confidence}%;"></div></div>
+          </div>
+        </div>
+      `;
+    }catch(err){
+      resultArea.innerHTML = `<div class="error-box">${t('detectErrorPrefix')} (${err.message})</div>`;
+    }
+  };
+  reader.readAsDataURL(file);
+});
+
+/* ---------------- PWA Install Support ---------------- */
+// Only registers when served over http(s) with a real hosted origin (not file://),
+// and only if manifest.json / sw.js are present alongside this file.
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.protocol === 'http:')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {
+      // sw.js not found next to this file yet — silently ignore until properly hosted
+    });
+  });
+}
+</script>
+</body>
+</html>
